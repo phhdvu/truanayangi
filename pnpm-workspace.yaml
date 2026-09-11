@@ -1,0 +1,11 @@
+allowBuilds:
+  # This optional native helper is not needed to run or build the app.
+  # Keep pnpm's install policy explicit so it does not fail on every clone.
+  unrs-resolver: false
+
+# Do not mutate node_modules implicitly when starting a script.
+# Run `pnpm install` explicitly when dependencies change.
+verifyDepsBeforeRun: warn
+
+# Keep the virtual store inside this project so pnpm versions share the same state.
+enableGlobalVirtualStore: false

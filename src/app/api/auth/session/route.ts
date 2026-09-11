@@ -1,0 +1,31 @@
+import { NextRequest, NextResponse } from "next/server";
+import { currentUser } from "@/lib/auth";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
+  if (!process.env.DATABASE_URL)
+    return NextResponse.json(
+      { mode: "demo", authenticated: false },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  try {
+    const user = await currentUser(req);
+    return NextResponse.json(
+      user
+        ? { mode: "live", authenticated: true, user }
+        : { mode: "live", authenticated: false },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    console.error(
+      "Auth session read failed",
+      error instanceof Error ? error.name : "UnknownError",
+    );
+    return NextResponse.json(
+      { error: "Chưa kiểm tra được phiên đăng nhập." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+}
