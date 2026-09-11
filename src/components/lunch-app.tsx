@@ -1753,15 +1753,10 @@ export function LunchApp() {
           <ShieldCheck size={14} /> HẸN NHAU GIỜ TRƯA
         </Badge>
         <h1>
-          Bữa trưa của
+          Trưa nay
           <br />
-          cả <span>đội.</span>
+          <span>ăn gì.</span>
         </h1>
-        <p>
-          Đăng nhập để cùng cả đội chọn món cho bữa trưa hôm nay.
-          <br />
-          Lần đầu vào app, bạn sẽ được hướng dẫn tạo mật khẩu riêng.
-        </p>
         <div className="welcome-food" aria-hidden="true">
           <span>🍜</span>
           <span>🍗</span>
