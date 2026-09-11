@@ -108,6 +108,30 @@ const comAnhThangDishes: Dish[] = [
     emoji: "🍲",
     category: "Cơm",
   },
+  {
+    id: "com-anh-thang-com-ca-kho",
+    name: "Cơm Cá Kho",
+    restaurant: "Cơm anh Thắng",
+    price: 0,
+    emoji: "🐟",
+    category: "Cơm",
+  },
+  {
+    id: "com-anh-thang-com-ga-xao",
+    name: "Cơm Gà Xào",
+    restaurant: "Cơm anh Thắng",
+    price: 0,
+    emoji: "🍗",
+    category: "Cơm",
+  },
+  {
+    id: "com-anh-thang-com-ga-rang",
+    name: "Cơm Gà Rang",
+    restaurant: "Cơm anh Thắng",
+    price: 0,
+    emoji: "🍗",
+    category: "Cơm",
+  },
 ];
 const comAnhThangToppings: Dish[] = [
   {

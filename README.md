@@ -63,7 +63,7 @@ Supabase cung cấp PostgreSQL đầy đủ cho mỗi project. App kết nối t
 
 6. Chạy `pnpm dev` và đăng nhập bằng một tài khoản vừa cấp. Lần đầu đăng nhập sẽ dừng ở màn hình đổi mật khẩu; sau khi đổi xong người dùng mới vào được danh sách nhóm.
 
-Nếu muốn chạy migration trực tiếp trong Supabase, mở **SQL Editor**, dán lần lượt nội dung các file trong [`supabase/migrations/`](supabase/migrations/) theo thứ tự tên file rồi bấm **Run**. Migration catalog sẽ tạo `public.restaurants` và `public.dishes`, đồng thời thêm quán Cơm anh Thắng cùng bốn món ban đầu. App dùng auth nội bộ ở Route Handler, không dùng Supabase Auth hay Data API cho đăng nhập. Session được lưu dưới dạng hash trong `public.auth_sessions`, còn cookie trình duyệt là HttpOnly và có thời hạn 7 ngày.
+Nếu muốn chạy migration trực tiếp trong Supabase, mở **SQL Editor**, dán lần lượt nội dung các file trong [`supabase/migrations/`](supabase/migrations/) theo thứ tự tên file rồi bấm **Run**. Migration catalog sẽ tạo `public.restaurants` và `public.dishes`, đồng thời thêm quán Cơm anh Thắng cùng bảy món hiện có. App dùng auth nội bộ ở Route Handler, không dùng Supabase Auth hay Data API cho đăng nhập. Session được lưu dưới dạng hash trong `public.auth_sessions`, còn cookie trình duyệt là HttpOnly và có thời hạn 7 ngày.
 
 Mật khẩu mới không được lưu bằng MD5 + salt. MD5 là hàm băm rất nhanh, khiến việc thử hàng loạt mật khẩu trở nên dễ dàng; app dùng `scrypt` với salt ngẫu nhiên riêng cho từng tài khoản, tham số chi phí bộ nhớ/CPU và so sánh thời gian không đổi. Đây là lựa chọn phù hợp hơn cho mật khẩu mới theo [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). Nếu sau này cần tương thích với một hệ thống cũ đang lưu MD5, nên làm migration riêng có kế hoạch, không dùng MD5 cho tài khoản mới.
 
@@ -88,7 +88,7 @@ Không cần tạo project Sites hay lưu file database trên filesystem Vercel.
 - Quyền trưởng nhóm được kiểm tra ở API, không chỉ ẩn nút trên giao diện. Không có mã quản trị mặc định.
 - Tên hiển thị của tài khoản live lấy từ `internal_users`; người dùng không thể giả tên tài khoản khác ở API. Chế độ demo vẫn cho phép đổi tên trên trình duyệt. Xóa cookie hoặc đăng nhập máy khác không tự khôi phục quyền trưởng nhóm cũ.
 - Lựa chọn của từng thành viên và kết quả gacha cá nhân được cập nhật trong transaction có `SELECT ... FOR UPDATE` để nhiều người đặt đồng thời không ghi đè mất dữ liệu của nhau. Giới hạn 200 thành viên, 30 món mỗi nhóm và 10 nhóm/người/ngày ở API.
-- Catalog hiện có quán **Cơm anh Thắng** với bốn món: Cơm Gà Sốt, Cơm Bò Xào Dưa, Cơm Xá Xíu và Cơm Thịt Kho. Khi mở nhóm, trưởng nhóm chọn quán rồi chọn các món được phép đặt; giá món có thể bổ sung sau trong thực đơn của nhóm.
+- Catalog hiện có quán **Cơm anh Thắng** với bảy món: Cơm Gà Sốt, Cơm Bò Xào Dưa, Cơm Xá Xíu, Cơm Thịt Kho, Cơm Cá Kho, Cơm Gà Xào và Cơm Gà Rang. Khi mở nhóm, trưởng nhóm chọn quán rồi chọn các món được phép đặt; giá món có thể bổ sung sau trong thực đơn của nhóm.
 
 ## Kiểm tra
 
