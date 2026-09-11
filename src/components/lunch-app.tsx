@@ -2184,7 +2184,7 @@ export function LunchApp() {
                     <EmptyDescription>
                       {search
                         ? "Thử tìm bằng một tên khác nhé."
-                        : "Một người mở nhóm, cả hội cùng chọn. Bắt đầu từ bạn nhé?"}
+                        : ""}
                     </EmptyDescription>
                   </EmptyHeader>
                   {!search && (
