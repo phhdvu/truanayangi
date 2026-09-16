@@ -38,6 +38,7 @@ export async function currentUser(req: NextRequest): Promise<AuthUser | null> {
       u.id,
       u.username,
       u.display_name AS "displayName",
+      u.company_code AS "companyCode",
       u.must_change_password AS "mustChangePassword"
     FROM public.auth_sessions AS s
     JOIN public.internal_users AS u ON u.id = s.user_id

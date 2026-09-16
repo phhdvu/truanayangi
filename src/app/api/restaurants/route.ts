@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 type CatalogRow = {
   restaurantId: string;
   restaurantName: string;
+  companyCode: string;
   dishId: string | null;
   dishName: string | null;
   price: number | null;
@@ -31,6 +32,7 @@ function catalogFromRows(rows: CatalogRow[]): Restaurant[] {
       ({
         id: row.restaurantId,
         name: row.restaurantName,
+        companyCode: row.companyCode,
         dishes: [],
         toppings: [],
         drinks: [],
@@ -87,6 +89,7 @@ export async function GET(req: NextRequest) {
       SELECT
         r.id AS "restaurantId",
         r.name AS "restaurantName",
+        r.company_code AS "companyCode",
         d.id AS "dishId",
         d.name AS "dishName",
         d.price,
@@ -97,6 +100,7 @@ export async function GET(req: NextRequest) {
         ON d.restaurant_id = r.id
        AND d.is_active = true
       WHERE r.is_active = true
+        AND r.company_code = ${user.companyCode}
       ORDER BY r.name ASC, d.name ASC
     `) as CatalogRow[];
 

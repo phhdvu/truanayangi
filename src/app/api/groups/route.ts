@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/auth";
+import { DEFAULT_COMPANY_CODE } from "@/lib/company";
 import { db } from "@/lib/db";
 import {
   changeGroup,
@@ -137,11 +138,21 @@ export async function GET(req: NextRequest) {
     if (groupId) {
       if (!z.uuid().safeParse(groupId).success)
         return reply(req, { error: "Mã nhóm không hợp lệ." }, 400);
-      const rows =
-        await db()`SELECT state FROM public.lunch_groups WHERE id = ${groupId}`;
+      const rows = await db()`
+        SELECT state, company_code AS "companyCode"
+        FROM public.lunch_groups
+        WHERE id = ${groupId}
+      `;
       if (!rows.length)
         return reply(req, { error: "Không tìm thấy nhóm này." }, 404);
       const group = rows[0].state as LunchGroup;
+      const companyCode =
+        (rows[0].companyCode as string | null | undefined) ??
+        group.companyCode ??
+        DEFAULT_COMPANY_CODE;
+      if (companyCode !== user.companyCode)
+        return reply(req, { error: "Không tìm thấy nhóm này." }, 404);
+      if (!group.companyCode) group.companyCode = companyCode;
       if (!group.members.some((m) => m.id === id))
         return reply(
           req,
@@ -153,8 +164,13 @@ export async function GET(req: NextRequest) {
     const date = req.nextUrl.searchParams.get("date") ?? today();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
       return reply(req, { error: "Ngày không hợp lệ." }, 400);
-    const rows =
-      await db()`SELECT state FROM public.lunch_groups WHERE day = ${date} ORDER BY created_at DESC LIMIT 100`;
+    const rows = await db()`
+      SELECT state
+      FROM public.lunch_groups
+      WHERE day = ${date} AND company_code = ${user.companyCode}
+      ORDER BY created_at DESC
+      LIMIT 100
+    `;
     return reply(req, {
       mode: "live",
       memberId: id,
@@ -249,6 +265,7 @@ export async function POST(req: NextRequest) {
       const group: LunchGroup = {
         id: crypto.randomUUID(),
         name: input.groupName,
+        companyCode: user.companyCode,
         restaurantName:
           input.restaurantName ?? input.dishes[0]?.restaurant ?? "Chưa chọn quán",
         date: today(),
@@ -278,10 +295,24 @@ export async function POST(req: NextRequest) {
         // Serialize creation for this identity to enforce the limit across instances.
         await sql`SELECT pg_advisory_xact_lock(hashtext(${user.id}))`;
         const [count] =
-          await sql`SELECT count(*)::int AS n FROM public.lunch_groups WHERE day = ${today()} AND state->>'ownerId' = ${user.id}`;
+          await sql`
+            SELECT count(*)::int AS n
+            FROM public.lunch_groups
+            WHERE day = ${today()}
+              AND company_code = ${user.companyCode}
+              AND state->>'ownerId' = ${user.id}
+          `;
         if (count.n >= 10)
           return { error: "Bạn đã tạo đủ 10 nhóm trong hôm nay." };
-        await sql`INSERT INTO public.lunch_groups (id, day, state) VALUES (${group.id}, ${group.date}, ${sql.json(JSON.parse(JSON.stringify(group)))})`;
+        await sql`
+          INSERT INTO public.lunch_groups (id, day, company_code, state)
+          VALUES (
+            ${group.id},
+            ${group.date},
+            ${user.companyCode},
+            ${sql.json(JSON.parse(JSON.stringify(group)))}
+          )
+        `;
         return { group };
       });
       return reply(
@@ -292,10 +323,21 @@ export async function POST(req: NextRequest) {
     }
     if (input.action === "delete") {
       const result = await db().begin(async (sql) => {
-        const rows =
-          await sql`SELECT state FROM public.lunch_groups WHERE id = ${input.groupId} FOR UPDATE`;
+        const rows = await sql`
+          SELECT state, company_code AS "companyCode"
+          FROM public.lunch_groups
+          WHERE id = ${input.groupId}
+          FOR UPDATE
+        `;
         if (!rows.length) return { error: "Không tìm thấy nhóm này." };
         const group = rows[0].state as LunchGroup;
+        const companyCode =
+          (rows[0].companyCode as string | null | undefined) ??
+          group.companyCode ??
+          DEFAULT_COMPANY_CODE;
+        if (companyCode !== user.companyCode)
+          return { error: "Không tìm thấy nhóm này." };
+        if (!group.companyCode) group.companyCode = companyCode;
         if (group.ownerId !== user.id)
           return { error: "Chỉ trưởng nhóm mới có thể xóa nhóm này." };
         if (group.completedAt)
@@ -315,13 +357,25 @@ export async function POST(req: NextRequest) {
       );
     }
     const result = await db().begin(async (sql) => {
-      const rows =
-        await sql`SELECT state FROM public.lunch_groups WHERE id = ${input.groupId} FOR UPDATE`;
+      const rows = await sql`
+        SELECT state, company_code AS "companyCode"
+        FROM public.lunch_groups
+        WHERE id = ${input.groupId}
+        FOR UPDATE
+      `;
       if (!rows.length) return { error: "Không tìm thấy nhóm này." };
+      const storedGroup = rows[0].state as LunchGroup;
+      const companyCode =
+        (rows[0].companyCode as string | null | undefined) ??
+        storedGroup.companyCode ??
+        DEFAULT_COMPANY_CODE;
+      if (companyCode !== user.companyCode)
+        return { error: "Không tìm thấy nhóm này." };
+      if (!storedGroup.companyCode) storedGroup.companyCode = companyCode;
       let group: LunchGroup;
       try {
         group = changeGroup(
-          rows[0].state as LunchGroup,
+          storedGroup,
           user.id,
           input.action === "join"
             ? { action: "join", name: user.displayName }
@@ -335,7 +389,13 @@ export async function POST(req: NextRequest) {
             error instanceof Error ? error.message : "Không thể cập nhật nhóm.",
         };
       }
-      await sql`UPDATE public.lunch_groups SET state = ${sql.json(JSON.parse(JSON.stringify(group)))} WHERE id = ${group.id}`;
+      await sql`
+        UPDATE public.lunch_groups
+        SET
+          company_code = ${user.companyCode},
+          state = ${sql.json(JSON.parse(JSON.stringify(group)))}
+        WHERE id = ${group.id}
+      `;
       if (orderLedgerActions.has(input.action)) {
         if (input.action === "vote") {
           const dish = group.dishes.find(
@@ -384,6 +444,7 @@ export async function POST(req: NextRequest) {
               INSERT INTO public.lunch_orders (
                 group_id,
                 member_id,
+                company_code,
                 day,
                 group_name,
                 dish_id,
@@ -405,6 +466,7 @@ export async function POST(req: NextRequest) {
               VALUES (
                 ${group.id},
                 ${user.id},
+                ${user.companyCode},
                 ${group.date},
                 ${group.name},
                 ${dish.id},
@@ -424,6 +486,7 @@ export async function POST(req: NextRequest) {
                 now()
               )
               ON CONFLICT (group_id, member_id) DO UPDATE SET
+                company_code = excluded.company_code,
                 day = excluded.day,
                 group_name = excluded.group_name,
                 dish_id = excluded.dish_id,

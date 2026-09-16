@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
         payer_name AS "payerName"
       FROM public.lunch_orders
       WHERE member_id = ${user.id}
+        AND company_code = ${user.companyCode}
       ORDER BY day DESC, updated_at DESC
     `;
     const orders = rows as unknown as Array<{

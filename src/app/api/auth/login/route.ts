@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
         id,
         username,
         display_name AS "displayName",
+        company_code AS "companyCode",
         password_hash AS "passwordHash",
         password_salt AS "passwordSalt",
         password_algorithm AS "passwordAlgorithm",
@@ -100,6 +101,7 @@ export async function POST(req: NextRequest) {
       id: candidate.id,
       username: candidate.username,
       displayName: candidate.displayName,
+      companyCode: candidate.companyCode,
       mustChangePassword: candidate.mustChangePassword,
     };
     const response = NextResponse.json(

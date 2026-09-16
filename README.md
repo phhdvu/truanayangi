@@ -55,8 +55,8 @@ Supabase cung cấp PostgreSQL đầy đủ cho mỗi project. App kết nối t
 5. Cấp tài khoản cho từng đồng nghiệp từ máy quản trị hoặc máy của bạn:
 
    ```powershell
-   pnpm user:create -- an.nguyen "Nguyễn Văn An"
-   pnpm user:create -- binh.tran "Trần Minh Bình"
+   pnpm user:create -- dst.an.nguyen "Nguyễn Văn An"
+   pnpm user:create -- dst.binh.tran "Trần Minh Bình"
    ```
 
    Mỗi tài khoản được tạo với mật khẩu mặc định `@DST123` và cờ bắt buộc đổi mật khẩu. Script chỉ lưu password hash, không lưu mật khẩu thô. Không chạy lệnh này từ trình duyệt hay đưa danh sách tài khoản vào git.
@@ -81,7 +81,8 @@ Không cần tạo project Sites hay lưu file database trên filesystem Vercel.
 
 ## Nhận diện và quyền
 
-- Đây là bản nội bộ dùng tài khoản được cấp sẵn, **chưa có đăng nhập công ty/SSO**. Ai có tài khoản hợp lệ mới vào được danh sách nhóm; nếu cần tự đồng bộ tài khoản nhân sự, có thể bổ sung SSO sau.
+- Đây là bản nội bộ dùng tài khoản được cấp sẵn, **chưa có đăng nhập công ty/SSO**. Username dùng namespace dạng `<ma-cong-ty>.<ten-tai-khoan>` (ví dụ `dst.vu.phd`), giúp mỗi tài khoản được gắn vào một công ty.
+- Nhóm, catalog quán/món và đơn lịch sử được lọc theo `company_code` của tài khoản. Các tài khoản và hai quán hiện tại đã được gán vào công ty `dst`; thêm công ty mới bằng cách tạo tài khoản có mã công ty tương ứng và thêm quán/món với cùng `company_code`.
 - Cookie session HttpOnly chứa token ngẫu nhiên; database chỉ lưu SHA-256 của token và thời hạn session. Token không được trả cho client JavaScript.
 - Tài khoản mới luôn có `must_change_password = true`; API nhóm từ chối thao tác cho đến khi đổi mật khẩu thành công. Đăng xuất xóa session hiện tại; đổi mật khẩu xóa các session khác của tài khoản.
 - Tài khoản được cấp bằng `pnpm user:create`, chưa có giao diện quản trị tài khoản trong app. Hãy giới hạn quyền truy cập máy hoặc CI chạy lệnh này.
@@ -123,6 +124,7 @@ Test nghiệp vụ kiểm tra suất đặt, phân quyền, ngày Việt Nam, gi
 - `supabase/migrations/20260910020000_create_lunch_orders.sql`: bảng snapshot suất ăn cá nhân và backfill lựa chọn cũ từ nhóm.
 - `supabase/migrations/20260910030000_add_completed_order_status.sql`: thêm trạng thái hoàn thành cho sổ đơn lâu dài.
 - `supabase/migrations/20260910040000_add_order_payer.sql`: lưu người thanh toán cùng mỗi suất để lịch sử cá nhân biết cần hoàn tiền cho ai.
+- `supabase/migrations/20260916000000_add_company_scoping.sql`: thêm phạm vi công ty cho tài khoản, catalog, nhóm và đơn lịch sử; backfill dữ liệu hiện tại vào DST.
 - `tests/lunch.test.ts`: test nghiệp vụ.
 
 Tham khảo: [Next.js](https://nextjs.org/docs/app/getting-started/installation), [shadcn/ui](https://ui.shadcn.com/docs/cli), [cấu hình Vercel](https://vercel.com/docs/project-configuration/vercel-json).

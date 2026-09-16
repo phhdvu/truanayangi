@@ -28,10 +28,19 @@ function deriveKey(password, salt) {
 const [rawUsername, ...displayNameParts] = process.argv.slice(2);
 const username = rawUsername?.trim().toLowerCase();
 const displayName = displayNameParts.join(" ").trim().replace(/\s+/g, " ");
+const companyCode = username?.split(".")[0];
+const localUsername = companyCode ? username.slice(companyCode.length + 1) : "";
 
-if (!username || !displayName || !/^[a-z0-9][a-z0-9._-]{2,49}$/.test(username)) {
+if (
+  !username ||
+  !displayName ||
+  !/^[a-z0-9][a-z0-9._-]{2,49}$/.test(username) ||
+  !companyCode ||
+  !/^[a-z0-9][a-z0-9-]{1,19}$/.test(companyCode) ||
+  localUsername.length < 2
+) {
   console.error(
-    "Cách dùng: pnpm user:create -- ten.tai.khoan \"Họ và tên\"",
+    "Cách dùng: pnpm user:create -- dst.ten.tai.khoan \"Họ và tên\"",
   );
   process.exit(1);
 }
@@ -64,9 +73,9 @@ try {
   } else {
     await sql`
       INSERT INTO public.internal_users
-        (id, username, display_name, password_hash, password_salt, password_algorithm)
+        (id, username, display_name, company_code, password_hash, password_salt, password_algorithm)
       VALUES
-        (${crypto.randomUUID()}, ${username}, ${displayName}, ${passwordHash}, ${salt}, ${PASSWORD_ALGORITHM})
+        (${crypto.randomUUID()}, ${username}, ${displayName}, ${companyCode}, ${passwordHash}, ${salt}, ${PASSWORD_ALGORITHM})
     `;
     console.log(`Đã tạo tài khoản ${username} cho ${displayName}.`);
     console.log("Mật khẩu mặc định: @DST123 (bắt buộc đổi ở lần đăng nhập đầu).");

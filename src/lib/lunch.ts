@@ -9,6 +9,8 @@ export type Dish = {
 export type Restaurant = {
   id: string;
   name: string;
+  /** Namespace used to keep this catalog inside one company's menu. */
+  companyCode?: string;
   dishes: Dish[];
   /** Optional add-ons that members can mix into their selected dish. */
   toppings?: Dish[];
@@ -23,6 +25,8 @@ export type Member = { id: string; name: string };
 export type LunchGroup = {
   id: string;
   name: string;
+  /** Company namespace for this group. Older demo groups may omit it. */
+  companyCode?: string;
   /** Restaurant selected when the group was created. Older groups derive this from their dishes. */
   restaurantName?: string;
   date: string;
@@ -365,6 +369,7 @@ export const restaurants: Restaurant[] = [
   {
     id: "com-anh-thang",
     name: "Cơm anh Thắng",
+    companyCode: "dst",
     dishes: comAnhThangDishes,
     toppings: comAnhThangToppings,
     mixFromMenu: true,
@@ -372,6 +377,7 @@ export const restaurants: Restaurant[] = [
   {
     id: "bun-rieu-ba-kieu",
     name: "Bún Riêu Bà Kiều",
+    companyCode: "dst",
     dishes: bunRieuBaKieuDishes,
     drinks: bunRieuBaKieuDrinks,
     extras: bunRieuBaKieuExtras,
