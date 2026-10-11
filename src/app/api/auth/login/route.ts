@@ -82,7 +82,17 @@ export async function POST(req: NextRequest) {
 
     const token = createSessionToken();
     const tokenHash = hashSessionToken(token);
-    await db().begin(async (sql) => {
+    const sessionCreated = await db().begin(async (sql) => {
+      // Lock the account row before creating a session so a concurrent
+      // deactivation cannot leave a fresh session behind.
+      const activeRows = await sql`
+        SELECT is_active AS "isActive"
+        FROM public.internal_users
+        WHERE id = ${candidate.id}
+        FOR UPDATE
+      `;
+      if (!activeRows.length || !activeRows[0].isActive) return false;
+
       await sql`DELETE FROM public.auth_sessions WHERE expires_at <= now()`;
       await sql`
         INSERT INTO public.auth_sessions
@@ -95,7 +105,14 @@ export async function POST(req: NextRequest) {
         SET last_login_at = now(), updated_at = now()
         WHERE id = ${candidate.id}
       `;
+      return true;
     });
+
+    if (!sessionCreated)
+      return NextResponse.json(
+        { error: "Tài khoản hoặc mật khẩu không đúng." },
+        { status: 401 },
+      );
 
     const user: AuthUser = {
       id: candidate.id,

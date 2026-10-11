@@ -61,6 +61,20 @@ Supabase cung cấp PostgreSQL đầy đủ cho mỗi project. App kết nối t
 
    Mỗi tài khoản được tạo với mật khẩu mặc định `@DST123` và cờ bắt buộc đổi mật khẩu. Script chỉ lưu password hash, không lưu mật khẩu thô. Không chạy lệnh này từ trình duyệt hay đưa danh sách tài khoản vào git.
 
+   Vô hiệu hóa tài khoản khi nhân sự không còn được phép truy cập, đồng thời thu hồi mọi session đang mở:
+
+   ```powershell
+   pnpm user:status -- deactivate dst.vu.phd
+   ```
+
+   Kích hoạt lại khi cần:
+
+   ```powershell
+   pnpm user:status -- activate dst.vu.phd
+   ```
+
+   Deactive không xóa tài khoản, nhóm, suất ăn hoặc lịch sử thanh toán. Lệnh này chỉ dành cho máy quản trị có `DATABASE_URL`; app hiện chưa có màn hình quản trị tài khoản.
+
 6. Chạy `pnpm dev` và đăng nhập bằng một tài khoản vừa cấp. Lần đầu đăng nhập sẽ dừng ở màn hình đổi mật khẩu; sau khi đổi xong người dùng mới vào được danh sách nhóm.
 
 Nếu muốn chạy migration trực tiếp trong Supabase, mở **SQL Editor**, dán lần lượt nội dung các file trong [`supabase/migrations/`](supabase/migrations/) theo thứ tự tên file rồi bấm **Run**. Migration catalog sẽ tạo `public.restaurants` và `public.dishes`, đồng thời thêm quán Cơm anh Thắng cùng bảy món hiện có. App dùng auth nội bộ ở Route Handler, không dùng Supabase Auth hay Data API cho đăng nhập. Session được lưu dưới dạng hash trong `public.auth_sessions`, còn cookie trình duyệt là HttpOnly và có thời hạn 7 ngày.
@@ -86,6 +100,7 @@ Không cần tạo project Sites hay lưu file database trên filesystem Vercel.
 - Cookie session HttpOnly chứa token ngẫu nhiên; database chỉ lưu SHA-256 của token và thời hạn session. Token không được trả cho client JavaScript.
 - Tài khoản mới luôn có `must_change_password = true`; API nhóm từ chối thao tác cho đến khi đổi mật khẩu thành công. Đăng xuất xóa session hiện tại; đổi mật khẩu xóa các session khác của tài khoản.
 - Tài khoản được cấp bằng `pnpm user:create`, chưa có giao diện quản trị tài khoản trong app. Hãy giới hạn quyền truy cập máy hoặc CI chạy lệnh này.
+- Tài khoản có thể được vô hiệu hóa/kích hoạt bằng `pnpm user:status -- deactivate|activate <username>`. Tài khoản deactive không đăng nhập được, session hiện tại bị thu hồi và dữ liệu lịch sử vẫn giữ nguyên.
 - Quyền trưởng nhóm được kiểm tra ở API, không chỉ ẩn nút trên giao diện. Không có mã quản trị mặc định.
 - Tên hiển thị của tài khoản live lấy từ `internal_users`; người dùng không thể giả tên tài khoản khác ở API. Chế độ demo vẫn cho phép đổi tên trên trình duyệt. Xóa cookie hoặc đăng nhập máy khác không tự khôi phục quyền trưởng nhóm cũ.
 - Lựa chọn của từng thành viên và kết quả gacha cá nhân được cập nhật trong transaction có `SELECT ... FOR UPDATE` để nhiều người đặt đồng thời không ghi đè mất dữ liệu của nhau. Giới hạn 200 thành viên, 30 món mỗi nhóm và 10 nhóm/người/ngày ở API.
@@ -118,6 +133,7 @@ Test nghiệp vụ kiểm tra suất đặt, phân quyền, ngày Việt Nam, gi
 - `scripts/check-db.mjs`: kiểm tra kết nối Supabase và trạng thái bảng.
 - `scripts/setup-db.mjs`: chạy tất cả migration trong `supabase/migrations/` theo thứ tự.
 - `scripts/create-user.mjs`: cấp tài khoản nội bộ với mật khẩu mặc định.
+- `scripts/set-user-status.mjs`: vô hiệu hóa/kích hoạt tài khoản và thu hồi session khi deactive.
 - `supabase/migrations/20260909000000_create_lunch_groups.sql`: schema PostgreSQL dùng cho Supabase.
 - `supabase/migrations/20260910000000_create_restaurant_catalog.sql`: schema và dữ liệu khởi tạo catalog quán/món.
 - `supabase/migrations/20260910010000_add_lunch_group_member_index.sql`: index JSONB cho truy vấn lịch sử theo thành viên.

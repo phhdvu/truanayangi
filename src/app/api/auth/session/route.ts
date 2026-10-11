@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@/lib/auth";
+import { clearSessionCookie, currentUser, sessionToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,12 +12,15 @@ export async function GET(req: NextRequest) {
     );
   try {
     const user = await currentUser(req);
-    return NextResponse.json(
+    const response = NextResponse.json(
       user
         ? { mode: "live", authenticated: true, user }
         : { mode: "live", authenticated: false },
       { headers: { "Cache-Control": "no-store" } },
     );
+    // Remove a stale cookie after an account was deactivated or a session
+    // was revoked, so the browser does not keep sending an unusable token.
+    return user || !sessionToken(req) ? response : clearSessionCookie(response);
   } catch (error) {
     console.error(
       "Auth session read failed",
